@@ -1,0 +1,122 @@
+---
+title: "The Effect of Transmission Type on MPG"
+author: "Paul Martinez"
+date: "04/10/2023"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=10, fig.height=5)
+options(width=120)
+```
+
+## Executive Summary
+
+The following analysis examines the relationship between transmission type and 
+MPG. This analysis answers the following two questions:
+
+* “Is an automatic or manual transmission better for MPG”
+* "Quantify the MPG difference between automatic and manual transmissions"
+
+
+## Data Upload and Cleaning
+
+I convert some variables to factor to facilitate with the analysis. 
+
+```{r}
+library(ggplot2)
+library(dplyr)
+data(mtcars)
+
+mtcars2<-mtcars
+
+
+mtcars$am <- as.factor(mtcars$am)
+levels(mtcars$am) <- c("automatic", "manual")
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$gear <- as.factor(mtcars$gear)
+mtcars$vs <- as.factor(mtcars$vs)
+levels(mtcars$vs) <- c("V", "S")
+
+```
+
+## Exploratory data analyses 
+
+Next, I explore the data.
+```{r}
+
+head(mtcars)
+```
+
+
+The following scatterplot examines the relationship between transmission type and MPG. 
+From these visualization we can see that there is a significant difference between automatic
+and manual transmissions. It appears manual transmissions are slightly more efficient when 
+it comes to MPG. We will conduct further testing. 
+
+```{r}
+# Figure 1
+ggplot(data = mtcars,   # set data
+       mapping = aes(     # map aesthetics to column values
+               x = mpg,           # map x-axis to age            
+               y = am,         # map y-axis to weight
+               color = am)
+)+     # map color to age
+        geom_point() 
+
+```
+
+Prior to creating a model, I wanted to explore if other variables also had a similar relationship with MPG.
+After conducting the Pearson correlation test below, we can see that the weight(wt) of the car and how
+many cylinders also had an extremely significant relationship between how much MPG is used and those variables. 
+
+```{r}
+# Correlation Test
+cors <- cor(mtcars2$mpg, mtcars2)
+orderedCors <- cors[,order(-abs(cors[1,]))]
+orderedCors
+
+```
+
+
+## Model selection 
+
+
+To start I test the question “Is an automatic or manual transmission better for MPG” using a linear regression model.
+In this model I only include MPG as my dependent variable and transmission type as my independent variable. 
+The results show that manual transmission in comparison to automatic yields a 7.24 positive MPG. This result was statistically
+significant at a p-value less than 0.000.
+
+```{r}
+# MODEL 1- TRANSMISSION TYPE
+
+model1 <- lm(mpg ~ am, mtcars)
+summary(model1)
+res <- resid(model1)
+
+#Residual Plot for Model 1
+plot(fitted(model1), res)
+
+```
+
+Next, while Model 1 showed promising results I wanted to explore what would happen if we add additional factors.
+Holding constant all other variables in the dataset, transmission type was not statistically signficant in model 2. In fact, 
+the only two variables that showed to have a statistically significant value at p>0.05 were the Weight of the car and gross horsepower, 
+while holding all other variables constant.
+
+```{r}
+# MODEL 2-All VARIABLES
+model2 <- lm(mpg ~ ., mtcars)
+summary(model2)
+res2 <- resid(model2)
+
+#Residual Plot for Model 2
+plot(fitted(model2), res2)
+```
+
+
+## Conclusion
+
+In conclusion, if we only considered Model 1 the answer to the question would be absolutely transmission type matter, 
+when considering MPG. However, if we account for other factors, we can see that it is not a statistically significant factor
+in comparison to other variables like the Weight of the car or the horsepower. 
